@@ -398,3 +398,12 @@ def test_a_heads_up_sharing_only_the_word_default_names_other_code():
     note = "Before you change the dev-alpha multi-loop default: ALPHA_EVENT_LOOPS>1 needs a newer core."
     assert W.headsup_names_other_code(note, "can we just enable it by default so we don't need any change?")
     assert not W.headsup_names_other_code(note, "make the dev-alpha loops default to 2")
+
+
+def test_an_answer_saying_there_is_nothing_to_say_is_not_a_note():
+    s = W.WatchState()
+    cmd = W.Moment(trigger="command", text="echo summary >> cleanup.log", recent=[], diff="")
+    assert not W.accept_note(s, cmd, "No conflict. The log entry is consistent with the recorded fact.", ["m1"])
+    assert not W.accept_note(s, cmd, "Nothing.", ["m2"])
+    assert W.accept_note(s, cmd, "None of the pruning may touch ~/dev: the job's rule keeps it.", ["m3"])
+    assert W.accept_note(s, cmd, "Keep the floor at 60 GB, not 50.", ["m4"])
