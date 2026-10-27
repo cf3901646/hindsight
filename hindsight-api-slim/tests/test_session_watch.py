@@ -392,3 +392,9 @@ def test_a_conflict_quoting_a_rule_already_quoted_is_a_repeat():
     assert W.accept_note(s, cmd, first, ["m1"])
     assert not W.accept_note(s, cmd, again, ["m2"])
     assert W.accept_note(s, cmd, other, ["m3"])
+
+
+def test_a_heads_up_sharing_only_the_word_default_names_other_code():
+    note = "Before you change the dev-alpha multi-loop default: ALPHA_EVENT_LOOPS>1 needs a newer core."
+    assert W.headsup_names_other_code(note, "can we just enable it by default so we don't need any change?")
+    assert not W.headsup_names_other_code(note, "make the dev-alpha loops default to 2")

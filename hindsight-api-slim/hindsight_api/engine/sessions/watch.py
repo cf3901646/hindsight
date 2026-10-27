@@ -70,8 +70,10 @@ BUSY_RETRY_S = 10
 _GENERIC_TARGET_WORDS = frozenset(
     "code handling change changes rule rules workflow workflows documentation installation deployment "
     "procedure issue invoke plugin interaction native chat lookup organization admission cleanup side "
-    "serve test tests fixtures repair deletion routing development release".split()
+    "serve test tests fixtures repair deletion routing development release default defaults".split()
 )
+# "default" joined after "enable it by default" matched "the dev-alpha multi-loop default" (beta: the
+# request meant memlake's indexer loops; the agent set the heads-up aside).
 # Per user request, not per session: a benchmark session is one task, but a real one runs for days
 # across many requests, and a per-session cap left a session silent for hours after three notes
 # (two of them wrong) — 49 checks an hour skipped as "note limit reached" (beta, 2026-10-22).
