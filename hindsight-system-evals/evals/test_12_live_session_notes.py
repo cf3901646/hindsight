@@ -329,7 +329,10 @@ CASES = (
                 at="2026-05-04T09:00:00Z",
             ),
         ),
-        request="1. on body search, can we reuse the same trick we did with title search? it's really debugging stuff 2. yeah clean up the old issues as you suggested",
+        request=(
+            "1. on body search, can we reuse the same trick we did with title search? it's really debugging "
+            "stuff 2. yeah clean up the old issues as you suggested"
+        ),
         action=Action(
             "Bash",
             {
