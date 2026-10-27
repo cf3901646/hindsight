@@ -314,6 +314,38 @@ CASES = (
         ),
         expect_note=False,
     ),
+    Case(
+        id="a-limit-the-code-still-has",
+        history=(
+            Memory(
+                _chat(
+                    ("user", "where are we on the search work?"),
+                    (
+                        "assistant",
+                        "Status:\n- Title search now uses the index.\n- **Body search** still reads the store page by "
+                        "page and stops at 10k rows.",
+                    ),
+                ),
+                at="2026-05-04T09:00:00Z",
+            ),
+        ),
+        request="1. on body search, can we reuse the same trick we did with title search? it's really debugging stuff 2. yeah clean up the old issues as you suggested",
+        action=Action(
+            "Bash",
+            {
+                "command": "python3 - <<'EOF'\np='search/reads.py'\ns=open(p).read()\n"
+                "a='With body search it reports what the scan saw.'\n"
+                "b='Body search is answered from the index, not a scan: see _body_search.'\n"
+                "assert a in s; s=s.replace(a,b); open(p,'w').write(s)\nEOF"
+            },
+            "",
+        ),
+        criteria=(
+            "No note says moving body search to the index breaks a rule or contradicts a recorded decision: the "
+            "memory only described what the code did then, and the request asks to change it." + NO_NOTE_OK
+        ),
+        expect_note=False,
+    ),
     # ---------------------------------------------------------------- a request that changes nothing
     Case(
         id="a-question-only",
