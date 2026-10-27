@@ -407,3 +407,11 @@ def test_an_answer_saying_there_is_nothing_to_say_is_not_a_note():
     assert not W.accept_note(s, cmd, "Nothing.", ["m2"])
     assert W.accept_note(s, cmd, "None of the pruning may touch ~/dev: the job's rule keeps it.", ["m3"])
     assert W.accept_note(s, cmd, "Keep the floor at 60 GB, not 50.", ["m4"])
+
+
+def test_a_command_started_in_the_background_says_so():
+    """Claude Code backgrounds by a flag, so the command text alone looks like a foreground run."""
+    s = W.WatchState()
+    cmd = {"command": "uv run index_check.py > .tmp/index_check.txt 2>&1", "run_in_background": True}
+    _feed(s, ("tool_call", "assistant", {"tool": "Bash", "input": cmd, "call_id": "c1"}))
+    assert s.pending is not None and s.pending.text.endswith("# started in the background")

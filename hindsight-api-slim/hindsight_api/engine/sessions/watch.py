@@ -354,6 +354,11 @@ def read_step(state: WatchState, step: Step, seq: int = 0) -> None:
             state.tools = dict(list(state.tools.items())[-OPEN_TOOL_CALLS:])
         what = _target(step.input)
         if tool_family(tool) == "command" and not READ_ONLY_CMD.match(what):
+            # Claude Code backgrounds a command by a flag, not a trailing `&`: without it a check read
+            # `index_check.py > out.txt 2>&1` as a foreground run against a job rule to background it
+            # (beta: twice, on two runs that had backgrounded it from the start).
+            if step.input.get("run_in_background"):
+                what += "  # started in the background"
             said = f"agent runs: {_clip(what, 300)}"
             trigger, text = "command", what
         else:
