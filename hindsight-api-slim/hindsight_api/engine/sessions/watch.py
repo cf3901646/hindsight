@@ -516,12 +516,20 @@ def skip_reason(state: WatchState, m: Moment) -> str | None:
 # switch to Gemma 4 one came back as "No conflict. The user's log entry ... is consistent with ..." and
 # went out as a thought.
 NOTHING_TO_SAY = re.compile(r"^\W*(no conflicts?\b|no (relevant )?decision\b|(nothing|none)\W*$)", re.I)
+# The same said in a whole sentence ("The user is not contradicting any decision; ... aligns with the
+# recorded rule", beta 03:15): judged on the first sentence only, so "X is consistent, but Y breaks
+# the rule" in a later one still goes out.
+AGREES_WITH_RULE = re.compile(
+    r"\b(not|no|nothing|never) (contradict|conflict)\w*|\b(is|are|stays?|remains?) consistent with\b|\baligns? with\b",
+    re.I,
+)
 
 
 def accept_note(state: WatchState, m: Moment, text: str, memory_ids: list[str]) -> bool:
     """Whether a note reaches the agent, recording it when it does: never the same memory twice.
     A heads-up does not use its memory up: going against it later is still worth saying."""
-    if not text.strip() or NOTHING_TO_SAY.match(text):
+    first = re.split(r"(?<=[.;!?])\s", text.strip(), maxsplit=1)[0]
+    if not text.strip() or NOTHING_TO_SAY.match(text) or AGREES_WITH_RULE.search(first):
         return False
     # The same words twice say nothing new, whatever the moment (a heads-up for a request the
     # client sent twice wrote the same note again).

@@ -407,6 +407,10 @@ def test_an_answer_saying_there_is_nothing_to_say_is_not_a_note():
     assert not W.accept_note(s, cmd, "Nothing.", ["m2"])
     assert W.accept_note(s, cmd, "None of the pruning may touch ~/dev: the job's rule keeps it.", ["m3"])
     assert W.accept_note(s, cmd, "Keep the floor at 60 GB, not 50.", ["m4"])
+    agrees = "The user is not contradicting any decision; they listed the path as left, which aligns with the rule."
+    assert not W.accept_note(s, cmd, agrees, ["m5"])
+    later = "The header is fine. Deleting ~/dev/archive contradicts the recorded keep-list for that folder."
+    assert W.accept_note(s, cmd, later, ["m6"])
 
 
 def test_a_command_started_in_the_background_says_so():
