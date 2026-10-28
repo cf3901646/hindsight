@@ -230,6 +230,21 @@ class RejectedOperation:
     error: str
 
 
+def _shape(value: Any) -> str:
+    """``{"op": "replace_block", "section_id": str, "text": str}``: keys, the op name, and types only."""
+    if isinstance(value, dict):
+        fields = ", ".join(
+            f"{key!r}: {value[key]!r}"
+            if key == "op" and isinstance(value[key], str) and len(value[key]) <= 40
+            else f"{key!r}: {_shape(value[key])}"
+            for key in list(value)[:12]
+        )
+        return "{" + fields + "}"
+    if isinstance(value, list):
+        return f"[{_shape(value[0])}, ...{len(value)}]" if value else "[]"
+    return type(value).__name__
+
+
 def _validate_operations_list(raw_ops: Any) -> list[Operation]:
     """Validate every operation, and refuse the batch if any one of them fails.
 
@@ -256,7 +271,15 @@ def _validate_operations_list(raw_ops: Any) -> list[Operation]:
             rejected.append(RejectedOperation(index=i, op=item, error=error))
     if rejected:
         for rejection in rejected:
-            logger.warning("[STRUCTURED_DELTA] rejected operation at index %s: %s", rejection.index, rejection.error)
+            # The op's shape (keys and value types), never its text: page content does not
+            # belong in logs, but without the shape a rejection like "Unable to extract tag
+            # using discriminator 'op'" cannot be diagnosed.
+            logger.warning(
+                "[STRUCTURED_DELTA] rejected operation at index %s: %s; shape %s",
+                rejection.index,
+                rejection.error,
+                _shape(rejection.op),
+            )
         raise DeltaOperationsInvalidError(
             f"{len(rejected)} of {len(raw_ops)} delta operation(s) failed validation", rejected
         )
@@ -647,6 +670,27 @@ def apply_operations(
                 return index
         return next((i for i, section in enumerate(new_doc.sections) if section.heading == anchor), None)
 
+    def block_section(op: Operation, block_id: str | None) -> Section | None:
+        """The section a block-level op edits, or None (recorded as a skip).
+
+        Some models put the block id in ``section_id`` too (``replace_block`` with
+        ``section_id == block_id``), and the retry sends the same ops again unchanged,
+        so the refresh pays a second call for nothing.
+        Block ids are unique across the document, so when ``section_id`` is not a
+        section at all, the section holding the op's block (or the block it named as
+        a section) is the only one the op can mean. A ``section_id`` that IS a real
+        section is never second-guessed: a block in another section stays a skip.
+        """
+        section = new_doc.section_by_id(op.section_id)
+        if section is not None:
+            return section
+        for candidate in (block_id, op.section_id):
+            owner = next((s for s in new_doc.sections if candidate and s.block_by_id(candidate)), None)
+            if owner is not None:
+                return owner
+        skip(op, f"unknown section_id: {op.section_id}")
+        return None
+
     def resolve_block(op: Operation, section: Section, block_id: str) -> int | None:
         index = section.block_index(block_id)
         if index is not None:
@@ -687,9 +731,8 @@ def apply_operations(
 
     for op in operations:
         if isinstance(op, AppendBlockOp):
-            section = new_doc.section_by_id(op.section_id)
+            section = block_section(op, None)
             if section is None:
-                skip(op, f"unknown section_id: {op.section_id}")
                 continue
             if empty_text(op, op.text):
                 continue
@@ -699,9 +742,8 @@ def apply_operations(
             continue
 
         if isinstance(op, InsertBlockOp):
-            section = new_doc.section_by_id(op.section_id)
+            section = block_section(op, op.after_block_id)
             if section is None:
-                skip(op, f"unknown section_id: {op.section_id}")
                 continue
             if empty_text(op, op.text):
                 continue
@@ -718,9 +760,8 @@ def apply_operations(
             continue
 
         if isinstance(op, ReplaceBlockOp):
-            section = new_doc.section_by_id(op.section_id)
+            section = block_section(op, op.block_id)
             if section is None:
-                skip(op, f"unknown section_id: {op.section_id}")
                 continue
             if empty_text(op, op.text):
                 continue
@@ -735,9 +776,8 @@ def apply_operations(
             continue
 
         if isinstance(op, RemoveBlockOp):
-            section = new_doc.section_by_id(op.section_id)
+            section = block_section(op, op.block_id)
             if section is None:
-                skip(op, f"unknown section_id: {op.section_id}")
                 continue
             index = resolve_block(op, section, op.block_id)
             if index is None:

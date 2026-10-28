@@ -535,6 +535,23 @@ class TestOperationsAreConservative:
         assert "WRONG" not in render_document(outcome.document)
         assert outcome.document == doc
 
+    def test_block_id_sent_as_section_id_edits_that_block(self):
+        """A block id copied into section_id; the block names one section."""
+        doc = _doc()
+        target = _block_id(doc, "members")
+        outcome = apply_operations(doc, [ReplaceBlockOp(section_id=target, block_id=target, text="- Only Alice now.")])
+        assert outcome.skipped == []
+        section = outcome.document.section_by_id("members")
+        assert section is not None and section.block_by_id(target).text == "- Only Alice now."
+
+    def test_append_to_a_block_id_lands_in_its_section(self):
+        doc = _doc()
+        target = _block_id(doc, "members")
+        outcome = apply_operations(doc, [AppendBlockOp(section_id=target, text="- Carol joined.")])
+        assert outcome.skipped == []
+        section = outcome.document.section_by_id("members")
+        assert section is not None and section.blocks[-1].text == "- Carol joined."
+
     def test_unknown_insert_anchor_is_skipped_not_appended(self):
         doc = _doc()
         outcome = apply_operations(doc, [InsertBlockOp(section_id="cadence", after_block_id="bnope", text="x")])

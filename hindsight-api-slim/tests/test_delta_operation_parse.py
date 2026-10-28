@@ -516,3 +516,13 @@ async def test_request_delta_operations_asks_again_after_a_refused_parsed_array(
     assert replayed["role"] == "assistant"
     assert json.loads(replayed["content"]) == _STRAY_ARRAY_PARSED
     assert op_list.operations[0].section_id == "s"
+
+
+def test_a_rejected_op_logs_its_shape_not_its_text(caplog):
+    from hindsight_api.engine.reflect.delta_ops import DeltaOperationsInvalidError, _validate_operations_list
+
+    with caplog.at_level("WARNING"), pytest.raises(DeltaOperationsInvalidError):
+        _validate_operations_list([{"type": "replace_block", "section_id": "s", "text": "SECRET page text"}])
+    logged = caplog.text
+    assert "{'type': str, 'section_id': str, 'text': str}" in logged
+    assert "SECRET" not in logged
