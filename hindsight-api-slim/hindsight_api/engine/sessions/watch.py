@@ -528,10 +528,12 @@ def skip_reason(state: WatchState, m: Moment) -> str | None:
 # went out as a thought.
 NOTHING_TO_SAY = re.compile(r"^\W*(no conflicts?\b|no (relevant )?decision\b|(nothing|none)\W*$)", re.I)
 # The same said in a whole sentence ("The user is not contradicting any decision; ... aligns with the
-# recorded rule", beta 03:15): judged on the first sentence only, so "X is consistent, but Y breaks
+# recorded rule", beta 03:15; "You are following your request to update the pricing ...", 13:36): judged
+# on the first sentence only, so "X is consistent, but Y breaks
 # the rule" in a later one still goes out.
 AGREES_WITH_RULE = re.compile(
-    r"\b(not|no|nothing|never) (contradict|conflict)\w*|\b(is|are|stays?|remains?) consistent with\b|\baligns? with\b",
+    r"\b(not|no|nothing|never) (contradict|conflict)\w*|\b(is|are|stays?|remains?) consistent with\b|\baligns? with\b"
+    r"|\b(are|is) following (your|the) (own )?request\b",
     re.I,
 )
 

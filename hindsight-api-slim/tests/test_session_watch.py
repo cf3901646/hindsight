@@ -409,6 +409,8 @@ def test_an_answer_saying_there_is_nothing_to_say_is_not_a_note():
     assert W.accept_note(s, cmd, "Keep the floor at 60 GB, not 50.", ["m4"])
     agrees = "The user is not contradicting any decision; they listed the path as left, which aligns with the rule."
     assert not W.accept_note(s, cmd, agrees, ["m5"])
+    following = 'You are following your request to update the pricing in INTERNAL.md to: "decision $0.02/M".'
+    assert not W.accept_note(s, cmd, following, ["m7"])
     later = "The header is fine. Deleting ~/dev/archive contradicts the recorded keep-list for that folder."
     assert W.accept_note(s, cmd, later, ["m6"])
 
