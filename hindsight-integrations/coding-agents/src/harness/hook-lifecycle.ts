@@ -37,7 +37,8 @@ export type HookHarnessName =
   | "traecode"
   | "kimi-code"
   | "workbuddy"
-  | "codebuddy";
+  | "codebuddy"
+  | "commandcode";
 export type HookLifecycle = "sessionStart" | "prompt" | "stop";
 /**
  * How the HOST spells one hook registration.
