@@ -419,3 +419,19 @@ def test_a_command_started_in_the_background_says_so():
     cmd = {"command": "uv run index_check.py > .tmp/index_check.txt 2>&1", "run_in_background": True}
     _feed(s, ("tool_call", "assistant", {"tool": "Bash", "input": cmd, "call_id": "c1"}))
     assert s.pending is not None and s.pending.text.endswith("# started in the background")
+
+
+def test_a_command_the_harness_refused_is_not_a_failure():
+    """An approval prompt or a quoting check is the harness, not the project failing."""
+    for text in (
+        "This Bash command contains multiple operations. The following parts require approval: cat JOB.md",
+        "This command can't be checked before it runs",
+        "Couldn't determine which page this action targets. Re-read tabs_context.",
+    ):
+        s = W.WatchState()
+        _feed(
+            s,
+            ("tool_call", "assistant", {"tool": "Bash", "input": {"command": "cat JOB.md && ls"}, "call_id": "c"}),
+            ("tool_result", "tool", {"text": text, "call_id": "c", "is_error": True}),
+        )
+        assert s.pending is None or s.pending.trigger != "failure", text

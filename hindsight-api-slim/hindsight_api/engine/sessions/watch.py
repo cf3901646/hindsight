@@ -165,7 +165,13 @@ READ_ONLY_CMD = re.compile(
     r"python3? -c|python3? -I -c|pip3? install|npm (test|run test)|npx (vitest|jest))\b"
 )
 # The sandbox failing, not the project: no moment.
-ENV_TROUBLE = re.compile(r"command not found|No module named (pytest|pip)")
+# So is the harness refusing or questioning a command before it ran (approval prompts, quoting
+# checks, a browser tool that lost its tab): in beta 55 failure checks in a week, none with a note.
+ENV_TROUBLE = re.compile(
+    r"command not found|No module named (pytest|pip)|require approval|requires approval"
+    r"|can't be checked before it runs|Couldn't determine which page|^Brace expansion"
+    r"|Newline followed by # inside a quoted argument"
+)
 FAILED = re.compile(r"\b\d+ failed\b|Traceback \(most recent call last\)|\bFAILED\b|\bError:")
 # How a delivered note reads when the agent's transcript carries it back.
 # Notes are numbered since the client names the one it credits ("Note #12 from this project's memory"):
