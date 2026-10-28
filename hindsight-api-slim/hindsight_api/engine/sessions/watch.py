@@ -101,6 +101,10 @@ PRIORITY: dict[str, int] = {"task": 0, "plan": 1, "failure": 2, "command": 3, "e
 # Three conflicts applied a rule to the wrong one of two similar parts: a rerank fallback rule to the
 # decision model, a consolidation queue limit to the decision model, a memory-scan rule to a document read.
 # And three notes in a day held up the last recorded pin of a dependency as a decision against moving it.
+# "<that file, module or component, by its name>": the template said "<the code>", and Gemma 4 copied it
+# word for word (3 of 4 heads-ups began "Before you change the code:"; 0 of 70 before).
+# "speak to me as 'you'": after the switch to Gemma 4, 3 of 11 notes began "The user's manual edit ..."
+# about the agent's own edit (1 in 175 before), which reads as if the person made the change.
 # What the code does now is not a rule either: in beta a summary line ("text search still reads the bank
 # page by page and stops at 25k memories") came back as "retain the rule" against the change the request
 # asked for.
@@ -114,7 +118,7 @@ DECISION = (
     "request or the job's own instructions say to do something, that is not a conflict. The request is "
     "the newest decision: where it changes or replaces a recorded one, even in a few words ('switch to "
     "X'), or asks for the very behaviour a recorded rule ruled out, without naming the rule, the recorded "
-    "one no longer holds."
+    "one no longer holds. I am the agent doing this work: speak to me as 'you', never as 'the user'."
 )
 
 # A request that changes nothing got "Before you change <x>" anyway in beta (a cost comparison, a
@@ -127,7 +131,8 @@ HEADSUP_Q = (
     "an exception) about exactly the code this request will change must my fix respect, that the request "
     "itself does not state? Only what someone decided (a chosen value or rule, an exception, a rejected "
     "option), not what the code already does: I can read that myself. Tell me in at most 70 words, as "
-    "'Before you change <the code>: <every such rule the memory's source text records for this code, "
+    "'Before you change <that file, module or component, by its name>: <every such rule the memory's "
+    "source text records for this code, "
     "in its final form, not only its summary; each rule a fix could get wrong>', copying "
     "exact literals verbatim, no advice beyond the rules. If memory records no such decision about this "
     "code, reply with nothing. If the request changes nothing (it asks a question, an analysis, a check or "
