@@ -349,6 +349,33 @@ CASES = (
         ),
         expect_note=False,
     ),
+    Case(
+        id="a-rule-for-another-environment",
+        history=(
+            Memory(
+                _chat(
+                    ("user", "turn the result cache off in staging, it hides bugs there"),
+                    ("assistant", "Done: staging now runs with `result_cache = false` in envs/staging/app.toml."),
+                ),
+                at="2026-06-02T09:00:00Z",
+            ),
+        ),
+        request="prod is slow on repeated queries, raise the result cache size there to 2 GB",
+        action=Action(
+            "Edit",
+            {
+                "file_path": "envs/prod/app.toml",
+                "old_string": "result_cache_mb = 512",
+                "new_string": "result_cache_mb = 2048",
+            },
+            "--- a/envs/prod/app.toml\n+++ b/envs/prod/app.toml\n-result_cache_mb = 512\n+result_cache_mb = 2048",
+        ),
+        criteria=(
+            "No note says the prod change breaks the staging rule or that the cache must be off: that rule was "
+            "made for staging only." + NO_NOTE_OK
+        ),
+        expect_note=False,
+    ),
     # ---------------------------------------------------------------- a request that changes nothing
     Case(
         id="a-question-only",
