@@ -202,6 +202,7 @@ def install_cli() -> bool:
         # Download and run installer with version env var
         env = os.environ.copy()
         env["HINDSIGHT_CLI_VERSION"] = cli_version
+        is_windows = sys.platform == "win32"
 
         result = subprocess.run(
             ["bash", "-c", f"curl -fsSL {CLI_INSTALLER_URL} | bash"],
@@ -230,6 +231,8 @@ def install_cli() -> bool:
             for install_dir in CLI_INSTALL_DIRS:
                 binary = install_dir / "hindsight"
                 print(f"  Checking {binary}: exists={binary.exists()}", file=sys.stderr)
+            if is_windows:
+                print("Note: The bundled CLI installer does not support Windows; use the HTTP API.", file=sys.stderr)
             return False
 
     except Exception as e:
