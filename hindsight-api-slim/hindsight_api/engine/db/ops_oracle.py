@@ -234,17 +234,34 @@ class OracleOps(DataAccessOps):
         weights = [lnk[3] for lnk in sorted_links]
         entity_ids = [lnk[4] for lnk in sorted_links]
 
-        await conn.executemany(
-            f"""
-            INSERT INTO {table}
-                (from_unit_id, to_unit_id, link_type, weight, entity_id, bank_id)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (from_unit_id, to_unit_id, link_type,
-                         COALESCE(entity_id, '{nil_entity_uuid}'::uuid))
-            DO NOTHING
-            """,
-            [(from_ids[i], to_ids[i], types[i], weights[i], entity_ids[i], bank_id) for i in range(len(sorted_links))],
-        )
+        # Use OracleConnection.executemany_filtered for batch processing with error handling
+        if hasattr(conn, 'executemany_filtered'):
+            await conn.executemany_filtered(
+                f"""
+                INSERT INTO {table}
+                    (from_unit_id, to_unit_id, link_type, weight, entity_id, bank_id)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (from_unit_id, to_unit_id, link_type,
+                             COALESCE(entity_id, '{nil_entity_uuid}'::uuid))
+                DO NOTHING
+                """,
+                [(from_ids[i], to_ids[i], types[i], weights[i], entity_ids[i], bank_id) for i in range(len(sorted_links))],
+                chunk_size=chunk_size,
+                nil_entity_uuid=nil_entity_uuid,
+            )
+        else:
+            # Fallback for generic stubs
+            await conn.executemany(
+                f"""
+                INSERT INTO {table}
+                    (from_unit_id, to_unit_id, link_type, weight, entity_id, bank_id)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (from_unit_id, to_unit_id, link_type,
+                             COALESCE(entity_id, '{nil_entity_uuid}'::uuid))
+                DO NOTHING
+                """,
+                [(from_ids[i], to_ids[i], types[i], weights[i], entity_ids[i], bank_id) for i in range(len(sorted_links))],
+            )
 
     async def bulk_insert_entities(
         self,
