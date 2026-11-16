@@ -619,6 +619,13 @@ async def newest_memory_updated_at(
     commits it is still newer than the watermark the refresh persists and the next
     staleness check catches it.
     """
+    # For Oracle, use SYS_EXTRACT_UTC to leverage IDX_MU_BANK_UPDATED_AT index
+    if getattr(conn, "backend_type", None) == "oracle":
+        scope = _refresh_scope_where(bank_id, until, since, fact_types, tags, tags_match, tag_groups, use_sys_extract_utc=True)
+        return await conn.fetchval(
+            f"SELECT MAX(updated_at) FROM {fq_table('memory_units')} WHERE {scope.sql}",
+            *scope.params,
+        )
     scope = _refresh_scope_where(bank_id, until, since, fact_types, tags, tags_match, tag_groups)
     return await conn.fetchval(
         f"SELECT MAX(updated_at) FROM {fq_table('memory_units')} WHERE {scope.sql}",
