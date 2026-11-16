@@ -41,6 +41,7 @@ from .._vector_index import (
     per_bank_indexes_are_eager,
 )
 from ..cancellation import OperationCancelledError
+from .remote_retry import is_transient_remote_error
 from ..config import (
     DEFAULT_MENTAL_MODEL_MIN_REFRESH_INTERVAL_SECONDS,
     DEFAULT_RECALL_CHUNKS_MAX_TOKENS,

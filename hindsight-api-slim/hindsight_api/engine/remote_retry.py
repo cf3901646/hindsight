@@ -132,21 +132,31 @@ def is_transient_remote_error(exc: BaseException) -> bool:
     """
     Return True when ``exc`` is worth retrying.
 
+    Walks the exception chain (__cause__ and __context__) for transient status.
     A status code, when present, is authoritative: 5xx and the transient 4xx set
     are retryable, every other 4xx (401/403 auth, 400/422 validation, 404) is
     permanent and must fail fast. Without a status code we fall back to
     transport-level exception types and known SDK exception names.
     """
-    status = status_code_of(exc)
-    if status is not None:
-        return status >= 500 or status in _TRANSIENT_STATUS_CODES
-    if isinstance(exc, (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError)):
-        return True
-    if isinstance(exc, (aiohttp.ClientConnectionError, aiohttp.ClientPayloadError)):
-        return True
-    if isinstance(exc, (TimeoutError, ConnectionError)):
-        return True
-    return type(exc).__name__ in _TRANSIENT_EXCEPTION_NAMES
+    seen: list[BaseException] = []
+    current = exc
+    while current is not None and current not in seen:
+        seen.append(current)
+        status = status_code_of(current)
+        if status is not None:
+            if status >= 500 or status in _TRANSIENT_STATUS_CODES:
+                return True
+            return False
+        if isinstance(current, (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError)):
+            return True
+        if isinstance(current, (aiohttp.ClientConnectionError, aiohttp.ClientPayloadError)):
+            return True
+        if isinstance(current, (TimeoutError, ConnectionError)):
+            return True
+        if type(current).__name__ in _TRANSIENT_EXCEPTION_NAMES:
+            return True
+        current = current.__cause__ or current.__context__
+    return False
 
 
 def jittered_backoff(attempt: int, initial_backoff: float, max_backoff: float) -> float:
